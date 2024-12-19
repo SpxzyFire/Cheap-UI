@@ -1,35 +1,52 @@
--- Cheap-UI Framework
+-- Cheap-UI Framework Source Code
 
--- Create a window (Main UI container)
-local function CreateWindow(properties)
-    local window = Instance.new("Frame")
-    window.Name = "Window"
-    window.Size = properties.Size or UDim2.new(0.5, 0, 0.5, 0)
-    window.Position = properties.Position or UDim2.new(0.25, 0, 0.25, 0)
-    window.BackgroundColor3 = properties.BackgroundColor or Color3.fromRGB(50, 50, 50)
-    window.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local CheapUI = {}
+
+-- Helper function to create UI elements
+local function CreateUIElement(className, properties)
+    local element = Instance.new(className)
+    for prop, value in pairs(properties) do
+        element[prop] = value
+    end
+    return element
+end
+
+-- Function to create the main window
+function CheapUI.CreateWindow(properties)
+    local window = CreateUIElement("Frame", {
+        Name = "Window",
+        Size = properties.Size or UDim2.new(0.5, 0, 0.5, 0),
+        Position = properties.Position or UDim2.new(0.25, 0, 0.25, 0),
+        BackgroundColor3 = properties.BackgroundColor or Color3.fromRGB(40, 40, 40),
+        Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui"),
+        ZIndex = 10
+    })
 
     -- Window title bar
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 40)
-    titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    titleBar.Parent = window
+    local titleBar = CreateUIElement("Frame", {
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        Parent = window
+    })
 
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Text = properties.Name or "Custom Window"
-    titleLabel.Size = UDim2.new(1, 0, 1, 0)
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextScaled = true
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Parent = titleBar
+    local titleLabel = CreateUIElement("TextLabel", {
+        Text = properties.Name or "Window",
+        Size = UDim2.new(1, 0, 1, 0),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextScaled = true,
+        BackgroundTransparency = 1,
+        Parent = titleBar
+    })
 
     -- Close button
-    local closeButton = Instance.new("TextButton")
-    closeButton.Size = UDim2.new(0, 30, 0, 30)
-    closeButton.Position = UDim2.new(1, -30, 0, 0)
-    closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    closeButton.Text = "X"
-    closeButton.Parent = titleBar
+    local closeButton = CreateUIElement("TextButton", {
+        Text = "X",
+        Size = UDim2.new(0, 30, 0, 30),
+        Position = UDim2.new(1, -30, 0, 5),
+        BackgroundColor3 = Color3.fromRGB(200, 0, 0),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Parent = titleBar
+    })
 
     closeButton.MouseButton1Click:Connect(function()
         if properties.CloseCallback then
@@ -41,68 +58,59 @@ local function CreateWindow(properties)
     return window
 end
 
--- Create a Tab in the window
-local function CreateTab(properties)
-    local tab = Instance.new("Frame")
-    tab.Size = UDim2.new(1, 0, 0, 50)
-    tab.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    tab.Parent = properties.Parent
+-- Function to create a tab
+function CheapUI.CreateTab(properties)
+    local tab = CreateUIElement("Frame", {
+        Name = properties.Name,
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        Parent = properties.Parent
+    })
 
-    -- Tab title
-    local tabLabel = Instance.new("TextLabel")
-    tabLabel.Text = properties.Name
-    tabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    tabLabel.TextSize = 18
-    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
-    tabLabel.Size = UDim2.new(1, -50, 1, 0)
-    tabLabel.BackgroundTransparency = 1
-    tabLabel.Parent = tab
+    local tabButton = CreateUIElement("TextButton", {
+        Text = properties.Name,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Parent = tab
+    })
 
-    -- Tab icon
-    if properties.Icon then
-        local tabIcon = Instance.new("ImageLabel")
-        tabIcon.Size = UDim2.new(0, 30, 0, 30)
-        tabIcon.Position = UDim2.new(0, 10, 0, 10)
-        tabIcon.Image = properties.Icon
-        tabIcon.BackgroundTransparency = 1
-        tabIcon.Parent = tab
-    end
+    tabButton.MouseButton1Click:Connect(function()
+        for _, child in ipairs(properties.Parent:GetChildren()) do
+            if child.Name == properties.Name then
+                child.Visible = true
+            else
+                child.Visible = false
+            end
+        end
+    end)
 
     return tab
 end
 
--- Create a Section inside the Tab
-local function CreateSection(properties)
-    local section = Instance.new("Frame")
-    section.Size = UDim2.new(1, 0, 0, 200)
-    section.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    section.Parent = properties.Parent
-
-    -- Section title
-    local sectionLabel = Instance.new("TextLabel")
-    sectionLabel.Text = properties.Name
-    sectionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sectionLabel.TextSize = 18
-    sectionLabel.TextXAlignment = Enum.TextXAlignment.Left
-    sectionLabel.Size = UDim2.new(1, -10, 0, 30)
-    sectionLabel.BackgroundTransparency = 1
-    sectionLabel.Parent = section
+-- Function to create a section inside a tab
+function CheapUI.CreateSection(properties)
+    local section = CreateUIElement("Frame", {
+        Name = properties.Name,
+        Size = UDim2.new(1, 0, 1, -50),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        Parent = properties.Parent,
+        Visible = true
+    })
 
     return section
 end
 
--- Create a Button inside the Section
-local function CreateButton(properties)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -10, 0, 30)
-    button.Position = UDim2.new(0, 5, 0, 40)
-    button.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
-    button.Text = properties.Text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 18
-    button.Parent = properties.Parent
+-- Function to create a button inside a section
+function CheapUI.CreateButton(properties)
+    local button = CreateUIElement("TextButton", {
+        Text = properties.Text,
+        Size = UDim2.new(0, 200, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Parent = properties.Parent
+    })
 
-    -- Button click action
     button.MouseButton1Click:Connect(function()
         if properties.OnClick then
             properties.OnClick()
@@ -112,124 +120,119 @@ local function CreateButton(properties)
     return button
 end
 
--- Create a Slider inside the Section
-local function CreateSlider(properties)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, -10, 0, 30)
-    sliderFrame.Position = UDim2.new(0, 5, 0, 40)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    sliderFrame.Parent = properties.Parent
+-- Function to create a slider inside a section
+function CheapUI.CreateSlider(properties)
+    local slider = CreateUIElement("Frame", {
+        Name = properties.Text,
+        Size = UDim2.new(0, 200, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+        Parent = properties.Parent
+    })
 
-    -- Slider text label
-    local sliderLabel = Instance.new("TextLabel")
-    sliderLabel.Text = properties.Text
-    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderLabel.TextSize = 16
-    sliderLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    sliderLabel.BackgroundTransparency = 1
-    sliderLabel.Parent = sliderFrame
+    local sliderBar = CreateUIElement("Frame", {
+        Size = UDim2.new(1, 0, 0, 10),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Parent = slider
+    })
 
-    -- Slider
-    local slider = Instance.new("TextButton")
-    slider.Size = UDim2.new(0.5, 0, 1, 0)
-    slider.Position = UDim2.new(0.5, 0, 0, 0)
-    slider.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    slider.Text = "0"
-    slider.Parent = sliderFrame
+    local sliderThumb = CreateUIElement("Frame", {
+        Size = UDim2.new(0, 20, 0, 20),
+        BackgroundColor3 = Color3.fromRGB(200, 0, 0),
+        Parent = sliderBar
+    })
 
-    -- Slider update function
-    slider.MouseButton1Down:Connect(function()
-        local value = properties.Min
-        -- Dragging mechanism for slider
-        while game:GetService("UserInputService").Mouse.IsButtonPressed(Enum.UserInputType.MouseButton1) do
-            local mousePos = game:GetService("Players").LocalPlayer:GetMouse().X
-            value = math.clamp((mousePos - sliderFrame.AbsolutePosition.X) / sliderFrame.AbsoluteSize.X * (properties.Max - properties.Min) + properties.Min, properties.Min, properties.Max)
-            slider.Text = tostring(math.round(value))
-            if properties.OnValueChanged then
-                properties.OnValueChanged(value)
-            end
-            wait(0.01)
+    local dragging = false
+    local function updateSliderPosition(x)
+        local position = math.clamp(x - sliderBar.AbsolutePosition.X, 0, sliderBar.AbsoluteSize.X)
+        sliderThumb.Position = UDim2.new(0, position, 0, 0)
+        local value = math.round(properties.Min + (position / sliderBar.AbsoluteSize.X) * (properties.Max - properties.Min))
+        if properties.OnValueChanged then
+            properties.OnValueChanged(value)
+        end
+    end
+
+    sliderThumb.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            updateSliderPosition(input.Position.X)
+        end
+    end)
+
+    sliderThumb.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSliderPosition(input.Position.X)
+        end
+    end)
+
+    sliderThumb.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
         end
     end)
 
     return slider
 end
 
--- Create a Toggle (Checkbox) inside the Section
-local function CreateToggle(properties)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(1, -10, 0, 30)
-    toggleFrame.Position = UDim2.new(0, 5, 0, 40)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    toggleFrame.Parent = properties.Parent
+-- Function to create a toggle (checkbox) inside a section
+function CheapUI.CreateToggle(properties)
+    local toggle = CreateUIElement("Frame", {
+        Name = properties.Text,
+        Size = UDim2.new(0, 200, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+        Parent = properties.Parent
+    })
 
-    -- Toggle text label
-    local toggleLabel = Instance.new("TextLabel")
-    toggleLabel.Text = properties.Text
-    toggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleLabel.TextSize = 16
-    toggleLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    toggleLabel.BackgroundTransparency = 1
-    toggleLabel.Parent = toggleFrame
+    local toggleButton = CreateUIElement("TextButton", {
+        Text = properties.Text,
+        Size = UDim2.new(0, 180, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Parent = toggle
+    })
 
-    -- Toggle button
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0.5, 0, 1, 0)
-    toggleButton.Position = UDim2.new(0.5, 0, 0, 0)
-    toggleButton.BackgroundColor3 = properties.Default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    toggleButton.Text = properties.Default and "ON" or "OFF"
-    toggleButton.Parent = toggleFrame
+    local isToggled = properties.Default or false
 
-    -- Toggle switch action
     toggleButton.MouseButton1Click:Connect(function()
-        local newState = not properties.Default
-        toggleButton.BackgroundColor3 = newState and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        toggleButton.Text = newState and "ON" or "OFF"
+        isToggled = not isToggled
         if properties.OnToggle then
-            properties.OnToggle(newState)
+            properties.OnToggle(isToggled)
         end
     end)
 
-    return toggleButton
+    return toggle
 end
 
--- Create a Color Picker inside the Section
-local function CreateColorPicker(properties)
-    local colorButton = Instance.new("TextButton")
-    colorButton.Size = UDim2.new(1, -10, 0, 30)
-    colorButton.Position = UDim2.new(0, 5, 0, 40)
-    colorButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-    colorButton.Text = properties.Text
-    colorButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    colorButton.TextSize = 18
-    colorButton.Parent = properties.Parent
+-- Function to create a color picker inside a section
+function CheapUI.CreateColorPicker(properties)
+    local colorPicker = CreateUIElement("Frame", {
+        Name = properties.Text,
+        Size = UDim2.new(0, 200, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+        Parent = properties.Parent
+    })
 
-    -- Color picker action
+    local colorButton = CreateUIElement("TextButton", {
+        Text = properties.Text,
+        Size = UDim2.new(0, 180, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = Color3.fromRGB(0, 0, 0),
+        Parent = colorPicker
+    })
+
     colorButton.MouseButton1Click:Connect(function()
-        -- Open color picker functionality (using custom or external method)
-        local color = Color3.fromRGB(255, 255, 255)  -- placeholder, use color picker library here
+        local color = Color3.fromHSV(math.random(), 1, 1)  -- Random color generation
         if properties.OnPick then
             properties.OnPick(color)
         end
     end)
 
-    return colorButton
+    return colorPicker
 end
 
--- Destroy UI (Window)
-local function DestroyUI(Window)
-    Window:Destroy()
+-- Function to destroy the UI
+function CheapUI.DestroyUI(window)
+    window:Destroy()
 end
 
--- Return the UI framework functions
-return {
-    CreateWindow = CreateWindow,
-    CreateTab = CreateTab,
-    CreateSection = CreateSection,
-    CreateButton = CreateButton,
-    CreateSlider = CreateSlider,
-    CreateToggle = CreateToggle,
-    CreateColorPicker = CreateColorPicker,
-    DestroyUI = DestroyUI
-}
-
+-- Return the CheapUI module
+return CheapUI
